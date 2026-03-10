@@ -1,0 +1,277 @@
+[package]
+name = "wgpu_book"
+version = "0.1.3"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.102"
+bytemuck = "1.25.0"
+env_logger = "0.11.9"
+flume = "0.12.0"         # ch13
+glam = "0.32.1"
+image = "0.25.10"        # ch10
+log = "0.4.29"
+pollster = "0.4.0"
+rand = "0.10.0"          # ch13
+wgpu = "28.0.0"
+winit = "0.30.13"
+
+[[example]]
+name = "ch01_window"
+path = "ch01/01_window/main.rs"
+
+[[example]]
+name = "ch02_triangle"
+path = "ch02/01_triangle/main.rs"
+
+[[example]]
+name = "ch02_triangle_color"
+path = "ch02/02_triangle_color/main.rs"
+
+[[example]]
+name = "ch03_point_line"
+path = "ch03/01_point_line/main.rs"
+
+[[example]]
+name = "ch03_triangles"
+path = "ch03/02_triangles/main.rs"
+
+[[example]]
+name = "ch04_triangle"
+path = "ch04/01_triangle/main.rs"
+
+[[example]]
+name = "ch04_square"
+path = "ch04/02_square/main.rs"
+
+[[example]]
+name = "ch04_square_index"
+path = "ch04/03_square_index/main.rs"
+
+[[example]]
+name = "ch05_scaling"
+path = "ch05/01_scaling/main.rs"
+
+[[example]]
+name = "ch05_translation"
+path = "ch05/02_translation/main.rs"
+
+[[example]]
+name = "ch05_rotation"
+path = "ch05/03_rotation/main.rs"
+
+[[example]]
+name = "ch05_view_projection"
+path = "ch05/04_view_projection/main.rs"
+
+[[example]]
+name = "ch06_line3d"
+path = "ch06/01_3D_line/main.rs"
+
+[[example]]
+name = "ch06_cube_face_color"
+path = "ch06/02_cube_face_color/main.rs"
+
+[[example]]
+name = "ch06_cube_vertex_color"
+path = "ch06/03_cube_vertex_color/main.rs"
+
+[[example]]
+name = "ch06_rotate_cube"
+path = "ch06/04_rotate_cube/main.rs"
+
+[[example]]
+name = "ch06_camera_control"
+path = "ch06/05_camera_control/main.rs"
+
+[[example]]
+name = "ch07_cube"
+path = "ch07/01_cube/main.rs"
+
+[[example]]
+name = "ch07_sphere"
+path = "ch07/02_sphere/main.rs"
+
+[[example]]
+name = "ch07_cylinder"
+path = "ch07/03_cylinder/main.rs"
+
+[[example]]
+name = "ch07_cone"
+path = "ch07/04_cone/main.rs"
+
+[[example]]
+name = "ch07_torus"
+path = "ch07/05_torus/main.rs"
+
+[[example]]
+name = "ch08_cube"
+path = "ch08/01_cube/main.rs"
+
+[[example]]
+name = "ch08_sphere"
+path = "ch08/02_sphere/main.rs"
+
+[[example]]
+name = "ch08_cylinder"
+path = "ch08/03_cylinder/main.rs"
+
+[[example]]
+name = "ch08_cone"
+path = "ch08/04_cone/main.rs"
+
+[[example]]
+name = "ch08_torus"
+path = "ch08/05_torus/main.rs"
+
+[[example]]
+name = "ch09_sinc"
+path = "ch09/01_sinc/main.rs"
+
+[[example]]
+name = "ch09_peaks"
+path = "ch09/02_peaks/main.rs"
+
+[[example]]
+name = "ch09_klein_bottle"
+path = "ch09/03_klein_bottle/main.rs"
+
+[[example]]
+name = "ch09_wellenkugel"
+path = "ch09/04_wellenkugel/main.rs"
+
+[[example]]
+name = "ch09_seashell"
+path = "ch09/05_seashell/main.rs"
+
+[[example]]
+name = "ch09_sievert_enneper"
+path = "ch09/06_sievert_enneper/main.rs"
+
+[[example]]
+name = "ch09_breather"
+path = "ch09/07_breather/main.rs"
+
+[[example]]
+name = "ch10_cube"
+path = "ch10/01_cube/main.rs"
+
+[[example]]
+name = "ch10_sphere"
+path = "ch10/02_sphere/main.rs"
+
+[[example]]
+name = "ch10_cylinder"
+path = "ch10/03_cylinder/main.rs"
+
+[[example]]
+name = "ch10_sinc"
+path = "ch10/04_sinc/main.rs"
+
+[[example]]
+name = "ch10_peaks"
+path = "ch10/05_peaks/main.rs"
+
+[[example]]
+name = "ch10_klein_bottle"
+path = "ch10/06_klein_bottle/main.rs"
+
+[[example]]
+name = "ch10_wellenkugel"
+path = "ch10/07_wellenkugel/main.rs"
+
+[[example]]
+name = "ch11_sinc"
+path = "ch11/01_sinc/main.rs"
+
+[[example]]
+name = "ch11_peaks"
+path = "ch11/02_peaks/main.rs"
+
+[[example]]
+name = "ch11_sphere"
+path = "ch11/03_sphere/main.rs"
+
+[[example]]
+name = "ch11_torus"
+path = "ch11/04_torus/main.rs"
+
+[[example]]
+name = "ch11_klein_bottle"
+path = "ch11/05_klein_bottle/main.rs"
+
+[[example]]
+name = "ch11_wellenkugel"
+path = "ch11/06_wellenkugel/main.rs"
+
+[[example]]
+name = "ch12_two_cubes"
+path = "ch12/01_two_cubes/main.rs"
+
+[[example]]
+name = "ch12_cube_instance"
+path = "ch12/02_cube_instance/main.rs"
+
+[[example]]
+name = "ch12_different_objects"
+path = "ch12/03_different_objects/main.rs"
+
+[[example]]
+name = "ch12_multiple_pipelines"
+path = "ch12/04_multiple_pipelines/main.rs"
+
+[[example]]
+name = "ch12_chart_pipelines"
+path = "ch12/05_chart_pipelines/main.rs"
+
+[[example]]
+name = "ch12_chart_axes"
+path = "ch12/06_chart_axes/main.rs"
+
+[[example]]
+name = "ch12_multiple_render_passes"
+path = "ch12/07_multiple_render_passes/main.rs"
+
+[[example]]
+name = "ch13_rotate2d"
+path = "ch13/01_rotate2d/main.rs"
+
+[[example]]
+name = "ch13_boids"
+path = "ch13/02_boids/main.rs"
+
+[[example]]
+name = "ch13_attractors"
+path = "ch13/03_attractors/main.rs"
+
+[[example]]
+name = "ch13_particles"
+path = "ch13/04_particles/main.rs"
+
+[[example]]
+name = "ch14_domain_color"
+path = "ch14/01_domain_color/main.rs"
+
+[[example]]
+name = "ch14_iterate_func"
+path = "ch14/02_iterate_func/main.rs"
+
+[[example]]
+name = "ch14_mandelbrot"
+path = "ch14/03_mandelbrot/main.rs"
+
+[[example]]
+name = "ch14_julia_set"
+path = "ch14/04_julia_set/main.rs"
+
+[[example]]
+name = "ch14_mandelbulb"
+path = "ch14/05_mandelbulb/main.rs"
+
+[[example]]
+name = "ch14_mandelbrot3d"
+path = "ch14/06_mandelbrot3d/main.rs"
+
+[[example]]
+name = "ch14_mandelbox"
+path = "ch14/07_mandelbox/main.rs"
