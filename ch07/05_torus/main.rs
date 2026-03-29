@@ -12,7 +12,7 @@ mod state;
 mod vertex;
 
 use crate::app::App;
-use crate::vertex::{vertex, Vertex};
+use crate::vertex::{Vertex, vertex};
 
 fn create_vertices(r_torus: f32, r_tube: f32, n_torus: usize, n_tube: usize) -> Vec<Vertex> {
     let mut pts: Vec<Vertex> = Vec::with_capacity((4 * (n_torus - 1) * (n_tube - 1)) as usize);
@@ -22,9 +22,9 @@ fn create_vertices(r_torus: f32, r_tube: f32, n_torus: usize, n_tube: usize) -> 
             let v = j as f32 * 360.0 / (n_tube as f32 - 1.0);
             let u1 = (i as f32 + 1.0) * 360.0 / (n_torus as f32 - 1.0);
             let v1 = (j as f32 + 1.0) * 360.0 / (n_tube as f32 - 1.0);
-            let p0 = math_func::torus_position(r_torus, r_tube, u.to_radians(), v.to_radians(),);
-            let p1 = math_func::torus_position(r_torus, r_tube, u1.to_radians(), v.to_radians(),);
-            let p3 = math_func::torus_position(r_torus, r_tube, u.to_radians(), v1.to_radians(),);
+            let p0 = math_func::torus_position(r_torus, r_tube, u.to_radians(), v.to_radians());
+            let p1 = math_func::torus_position(r_torus, r_tube, u1.to_radians(), v.to_radians());
+            let p3 = math_func::torus_position(r_torus, r_tube, u.to_radians(), v1.to_radians());
 
             pts.push(vertex(p0));
             pts.push(vertex(p1));

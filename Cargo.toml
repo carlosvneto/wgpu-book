@@ -6,14 +6,14 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.102"
 bytemuck = "1.25.0"
-env_logger = "0.11.9"
+env_logger = "0.11.10"
 flume = "0.12.0"         # ch13
 glam = "0.32.1"
 image = "0.25.10"        # ch10
 log = "0.4.29"
 pollster = "0.4.0"
 rand = "0.10.0"          # ch13
-wgpu = "28.0.0"
+wgpu = "29.0.0"
 winit = "0.30.13"
 
 [[example]]

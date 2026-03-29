@@ -1,15 +1,14 @@
-use std::sync::Arc;
 use bytemuck::cast_slice;
-//use cgmath::Matrix4;
 use glam::Mat4;
+use std::sync::Arc;
 use wgpu::util::DeviceExt;
 use winit::{
-    event_loop::ActiveEventLoop,
+    event_loop::{ActiveEventLoop, OwnedDisplayHandle},
     keyboard::KeyCode,
     window::Window,
 };
 
-use crate::vertex::{create_vertices, Vertex, IS_PERSPECTIVE};
+use crate::vertex::{IS_PERSPECTIVE, Vertex, create_vertices};
 use wgpu_book::transforms;
 use wgpu_book::wgpu_simplified as ws;
 
@@ -26,8 +25,8 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(window: Arc<Window>) -> Self {
-        let init = ws::InitWgpu::init_wgpu(window, 1).await;
+    pub async fn new(display: OwnedDisplayHandle, window: Arc<Window>) -> Self {
+        let init = ws::InitWgpu::init_wgpu(display, window, 1).await;
 
         // Loading Shaders
         let shader = init
@@ -37,7 +36,7 @@ impl State {
         // uniform data
         let camera_position = (1.5, 1.0, 3.0).into();
         let look_direction = (0.0, 0.0, 0.0).into();
-        let up_direction = (0.0, 1.0, 0.0).into();  //Vec3::unit_y();  // Returns Vec3 { x: 0.0, y: 1.0, z: 0.0 } // cgmath::Vector3::unit_y();
+        let up_direction = (0.0, 1.0, 0.0).into();
 
         let model_mat =
             transforms::create_transforms([0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]);
@@ -88,7 +87,7 @@ impl State {
             .device
             .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[&uniform_bind_group_layout],
+                bind_group_layouts: &[Some(&uniform_bind_group_layout)],
                 immediate_size: 0, // push_constant_ranges: &[],
             });
 
@@ -124,8 +123,8 @@ impl State {
                 //depth_stencil: None,
                 depth_stencil: Some(wgpu::DepthStencilState {
                     format: wgpu::TextureFormat::Depth24Plus,
-                    depth_write_enabled: true,
-                    depth_compare: wgpu::CompareFunction::LessEqual,
+                    depth_write_enabled: Some(true),
+                    depth_compare: Some(wgpu::CompareFunction::LessEqual),
                     stencil: wgpu::StencilState::default(),
                     bias: wgpu::DepthBiasState::default(),
                 }),
@@ -167,10 +166,8 @@ impl State {
                 .surface
                 .configure(&self.init.device, &self.init.config);
 
-            self.project_mat = transforms::create_projection(
-                width as f32 / height as f32,
-                IS_PERSPECTIVE,
-            );
+            self.project_mat =
+                transforms::create_projection(width as f32 / height as f32, IS_PERSPECTIVE);
             let mvp_mat = self.project_mat * self.view_mat * self.model_mat;
             let mvp_ref: &[f32; 16] = mvp_mat.as_ref();
             self.init
@@ -183,17 +180,31 @@ impl State {
         match (key, pressed) {
             (KeyCode::Escape, true) => {
                 event_loop.exit();
-            } 
-            _ => {},
+            }
+            _ => {}
         }
     }
 
+    #[allow(dead_code)]
     pub fn update(&mut self) {
         // We don't have anything to update yet
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let output = self.init.surface.get_current_texture()?;
+    pub fn render(&mut self) -> Option<()> {
+        let output = match self.init.surface.get_current_texture() {
+            wgpu::CurrentSurfaceTexture::Success(texture)
+            | wgpu::CurrentSurfaceTexture::Suboptimal(texture) => texture,
+            wgpu::CurrentSurfaceTexture::Occluded | wgpu::CurrentSurfaceTexture::Timeout => {
+                return None;
+            }
+            wgpu::CurrentSurfaceTexture::Lost | wgpu::CurrentSurfaceTexture::Outdated => {
+                return None;
+            }
+            other => {
+                eprintln!("Failed to get surface texture: {other:?}");
+                return None;
+            }
+        };
 
         let view = output
             .texture
@@ -267,6 +278,6 @@ impl State {
         self.init.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 
-        Ok(())
+        Some(())
     }
 }

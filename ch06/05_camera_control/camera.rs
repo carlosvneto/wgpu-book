@@ -8,11 +8,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new<Pt: Into<Vec3>>(
-        position: Pt,
-        yaw: f32,
-        pitch: f32,
-    ) -> Self {
+    pub fn new<Pt: Into<Vec3>>(position: Pt, yaw: f32, pitch: f32) -> Self {
         Self {
             position: position.into(),
             yaw: yaw.to_radians(),
@@ -60,7 +56,7 @@ impl CameraController {
 
         self.rotatex = 0.0;
         self.rotatey = 0.0;
-        
+
         if camera.pitch < -(89.0 * PI / 180.0) {
             camera.pitch = -(89.0 * PI / 180.0);
         } else if camera.pitch > (89.0 * PI / 180.0) {

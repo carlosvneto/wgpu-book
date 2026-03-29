@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::time::SystemTime;
 use wgpu::util::DeviceExt;
 use winit::{
-    event_loop::ActiveEventLoop,
+    event_loop::{ActiveEventLoop, OwnedDisplayHandle},
     keyboard::KeyCode,
     window::Window,
 };
@@ -23,8 +23,8 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(window: Arc<Window>, select_color: f32) -> Self {
-        let init = ws::InitWgpu::init_wgpu(window, 1).await;
+    pub async fn new(display: OwnedDisplayHandle, window: Arc<Window>, select_color: f32) -> Self {
+        let init = ws::InitWgpu::init_wgpu(display, window, 1).await;
         let start = SystemTime::now();
         let cxy = vec![
             vec![0.3f32, 0.5],
@@ -94,7 +94,7 @@ impl State {
             .device
             .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[&uniform_bind_group_layout],
+                bind_group_layouts: &[Some(&uniform_bind_group_layout)],
                 immediate_size: 0,
             });
 
@@ -179,8 +179,8 @@ impl State {
         match (key, pressed) {
             (KeyCode::Escape, true) => {
                 event_loop.exit();
-            } 
-            _ => {},
+            }
+            _ => {}
         }
     }
 
@@ -188,7 +188,7 @@ impl State {
         // We don't have anything to update yet
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self) -> Option<()> {
         let t = self.start.elapsed().unwrap().as_millis() as f32;
         let dt = t - self.t0;
         if dt >= 20.0 {
@@ -217,7 +217,20 @@ impl State {
             self.t0 = t;
         }
 
-        let output = self.init.surface.get_current_texture()?;
+        let output = match self.init.surface.get_current_texture() {
+            wgpu::CurrentSurfaceTexture::Success(texture)
+            | wgpu::CurrentSurfaceTexture::Suboptimal(texture) => texture,
+            wgpu::CurrentSurfaceTexture::Occluded | wgpu::CurrentSurfaceTexture::Timeout => {
+                return None;
+            }
+            wgpu::CurrentSurfaceTexture::Lost | wgpu::CurrentSurfaceTexture::Outdated => {
+                return None;
+            }
+            other => {
+                eprintln!("Failed to get surface texture: {other:?}");
+                return None;
+            }
+        };
 
         let view = output
             .texture
@@ -264,6 +277,6 @@ impl State {
         self.init.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 
-        Ok(())
+        Some(())
     }
 }

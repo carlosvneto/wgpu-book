@@ -15,7 +15,7 @@ use wgpu_book::vertex_data;
 use winit::event_loop::EventLoop;
 
 use crate::app::App;
-use crate::light::{light, Light};
+use crate::light::{Light, light};
 use crate::vertex::Vertex;
 
 fn vertex(p: [i8; 3], n: [i8; 3], t: [i8; 2]) -> Vertex {

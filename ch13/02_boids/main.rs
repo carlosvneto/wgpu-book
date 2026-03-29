@@ -19,7 +19,7 @@ fn main() {
 
     pub fn run(clr: f32, title: &'static str) -> anyhow::Result<()> {
         env_logger::init();
-        
+
         let event_loop = EventLoop::builder().build()?;
         let mut app = App::new(clr, title, None);
 

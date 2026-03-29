@@ -16,7 +16,7 @@ use winit::event_loop::EventLoop;
 
 use crate::app::App;
 use crate::light::Light;
-use crate::vertex::{vertex, Vertex};
+use crate::vertex::{Vertex, vertex};
 
 fn create_vertices(rin: f32, rout: f32, h: f32, n: usize) -> Vec<Vertex> {
     let (pos, normal, _uvs) = vertex_data::cylinder_data(rin, rout, h, n);
@@ -34,11 +34,7 @@ fn main() {
 
     let _ = run(&vertex_data, light_data, title);
 
-    pub fn run(
-        vertex_data: &Vec<Vertex>,
-        light_data: Light,
-        title: &str,
-    ) -> anyhow::Result<()> {
+    pub fn run(vertex_data: &Vec<Vertex>, light_data: Light, title: &str) -> anyhow::Result<()> {
         env_logger::init();
 
         let event_loop = EventLoop::builder().build()?;

@@ -10,7 +10,7 @@ mod state;
 mod vertex;
 
 use crate::app::App;
-use crate::vertex::{vertex, Vertex};
+use crate::vertex::{Vertex, vertex};
 
 pub fn create_vertices() -> Vec<Vertex> {
     // vertex positions

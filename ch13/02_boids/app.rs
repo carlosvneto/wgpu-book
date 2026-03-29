@@ -18,7 +18,11 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(color_scale: f32, title: &'static str, render_start_time: Option<time::Instant>) -> Self {
+    pub fn new(
+        color_scale: f32,
+        title: &'static str,
+        render_start_time: Option<time::Instant>,
+    ) -> Self {
         Self {
             state: None,
             color_scale,
@@ -34,14 +38,14 @@ impl ApplicationHandler for App {
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
-        self.state = Some(pollster::block_on(async { 
+        self.state = Some(pollster::block_on(async {
             State::new(
-                window.into(), 
-                self.color_scale
+                event_loop.owned_display_handle(),
+                window.into(),
+                self.color_scale,
             )
             .await
-         }));
-
+        }));
 
         self.render_start_time = Some(time::Instant::now());
     }
@@ -65,30 +69,12 @@ impl ApplicationHandler for App {
                 state.resize(size.width, size.height);
             }
             WindowEvent::RedrawRequested => {
+                let _ = state.render();
+                // Emits a new redraw requested event.
                 state.window().request_redraw();
                 let now = std::time::Instant::now();
                 let dt = now - self.render_start_time.unwrap_or(now);
                 state.update(dt);
-                match state.render() {
-                    Ok(_) => {}
-                    // Rebuild your Surface if it's lost or outdated
-                    Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        let size = state.window().inner_size();
-                        state.resize(size.width, size.height);
-                    }
-                    // Terminate application if memory is low
-                    Err(wgpu::SurfaceError::OutOfMemory) => {
-                        println!("Out of memory");
-                        event_loop.exit();
-                    }
-                    // If a frame takes too long to display, warn and move on to the next frame
-                    Err(wgpu::SurfaceError::Timeout) => {
-                        println!("Surface timeout");
-                    }
-                    Err(wgpu::SurfaceError::Other) => {
-                        println!("Surface error");
-                    }  
-                }
             }
             WindowEvent::KeyboardInput {
                 event:
@@ -102,7 +88,6 @@ impl ApplicationHandler for App {
             _ => {}
         }
     }
-
 
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
         if let Some(state) = &self.state {

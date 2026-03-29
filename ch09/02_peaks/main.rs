@@ -15,8 +15,8 @@ use wgpu_book::math_func;
 use winit::event_loop::EventLoop;
 
 use crate::app::App;
-use crate::light::{light, Light};
-use crate::vertex::{create_vertices, Vertex};
+use crate::light::{Light, light};
+use crate::vertex::{Vertex, create_vertices};
 
 fn main() {
     let mut colormap_name = "jet";

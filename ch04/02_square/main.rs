@@ -12,7 +12,7 @@ use app::App;
 
 fn main() {
     let title = "ch04 square";
-    
+
     let _ = run(title);
 
     pub fn run(title: &'static str) -> anyhow::Result<()> {

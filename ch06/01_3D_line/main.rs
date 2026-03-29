@@ -10,7 +10,7 @@ use app::App;
 
 fn main() {
     let title = "ch06 3D line";
-    
+
     let _ = run(title);
 
     pub fn run(title: &'static str) -> anyhow::Result<()> {

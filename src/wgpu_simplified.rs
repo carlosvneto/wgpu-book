@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use winit::window::Window;
+use winit::{event_loop::OwnedDisplayHandle, window::Window};
 
 // region: wgpu initialization
 pub struct InitWgpu {
@@ -14,52 +14,37 @@ pub struct InitWgpu {
 }
 
 impl InitWgpu {
-    pub async fn init_wgpu(window: Arc<Window>, sample_count: u32) -> Self {
-
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::PRIMARY,
-            ..Default::default()
-        });
+    pub async fn init_wgpu(
+        display: OwnedDisplayHandle,
+        window: Arc<Window>,
+        sample_count: u32,
+    ) -> Self {
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_with_display_handle(
+            Box::new(display),
+        ));
 
         // Surface
         let surface = instance.create_surface(window.clone()).unwrap();
 
-        // Adapter:
+        // Adapter
         let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
-                compatible_surface: Some(&surface),
-                force_fallback_adapter: false,
-                ..Default::default()
-            })
+            .request_adapter(&wgpu::RequestAdapterOptions::default())
             .await
             .unwrap();
 
         // Logical Device and Queue
         let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: None,
-                    required_features: wgpu::Features::empty(),
-                    required_limits: wgpu::Limits::default(),
-                    ..Default::default()
-                },
-            )
+            .request_device(&wgpu::DeviceDescriptor::default())
             .await
             .unwrap();
+
+        let surface_caps = surface.get_capabilities(&adapter);
+
+        let surface_format = surface_caps.formats[0];
 
         let device = Arc::new(device);
 
         let size = window.inner_size();
-
-        let surface_caps = surface.get_capabilities(&adapter);
-        //let format = surface_caps.formats[0];
-        let surface_format = surface_caps
-            .formats
-            .iter()
-            .copied()
-            .find(|f| f.is_srgb())
-            .unwrap_or(surface_caps.formats[0]);
 
         // Defines how a Surface creates a SurfaceTexture.
         let config = wgpu::SurfaceConfiguration {
@@ -133,8 +118,8 @@ impl IRenderPipeline<'_> {
         if self.is_depth_stencil {
             depth_stencil = Some(wgpu::DepthStencilState {
                 format: wgpu::TextureFormat::Depth24Plus,
-                depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::LessEqual,
+                depth_write_enabled: Some(true),
+                depth_compare: Some(wgpu::CompareFunction::LessEqual),
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
             });

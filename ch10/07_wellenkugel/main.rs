@@ -16,8 +16,8 @@ use wgpu_book::surface_data;
 use winit::event_loop::EventLoop;
 
 use crate::app::App;
-use crate::light::{light, Light};
-use crate::vertex::{vertex, Vertex};
+use crate::light::{Light, light};
+use crate::vertex::{Vertex, vertex};
 
 fn create_vertices(ul: f32, vl: f32) -> Vec<Vertex> {
     let (pos, normal, _color, _uv, _uv1) = surface_data::parametric_surface_data(

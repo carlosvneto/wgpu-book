@@ -12,7 +12,7 @@ mod state;
 mod vertex;
 
 use crate::app::App;
-use crate::vertex::{vertex, Vertex};
+use crate::vertex::{Vertex, vertex};
 
 fn create_vertices(rtop: f32, rbottom: f32, height: f32, n: usize) -> Vec<Vertex> {
     let h = height / 2.0;

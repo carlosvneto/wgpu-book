@@ -1,11 +1,11 @@
+use glam::DVec2;
 use std::sync::Arc;
 use std::time::SystemTime;
-use glam::DVec2;
 use wgpu::util::DeviceExt;
 use winit::{
-    event_loop::ActiveEventLoop,
-    keyboard::KeyCode,
     event::MouseButton,
+    event_loop::{ActiveEventLoop, OwnedDisplayHandle},
+    keyboard::KeyCode,
     window::Window,
 };
 
@@ -28,8 +28,14 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(window: Arc<Window>, max_iter: f32, scale: f32, mouse_control: bool) -> Self {
-        let init = ws::InitWgpu::init_wgpu(window, 1).await;
+    pub async fn new(
+        display: OwnedDisplayHandle,
+        window: Arc<Window>,
+        max_iter: f32,
+        scale: f32,
+        mouse_control: bool,
+    ) -> Self {
+        let init = ws::InitWgpu::init_wgpu(display, window, 1).await;
         let start = SystemTime::now();
 
         // Loading shader
@@ -91,7 +97,7 @@ impl State {
             .device
             .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[&bind_group_layout],
+                bind_group_layouts: &[Some(&bind_group_layout)],
                 immediate_size: 0,
             });
 
@@ -161,7 +167,7 @@ impl State {
                 .configure(&self.init.device, &self.init.config);
         }
     }
-    
+
     pub fn handle_mouse_moved(&mut self, x: f64, y: f64) {
         let position = DVec2::new(x, y);
         if self.mouse_pressed && self.mouse_control {
@@ -173,20 +179,20 @@ impl State {
         }
         self.prior_mouse_pos = Some(position);
     }
-    
+
     pub fn handle_mouse_button(&mut self, button: MouseButton, pressed: bool) {
         match button {
             MouseButton::Right => self.mouse_pressed = pressed,
             _ => {}
         }
     }
-    
+
     pub fn handle_key_input(&mut self, event_loop: &ActiveEventLoop, key: KeyCode, pressed: bool) {
         match (key, pressed) {
             (KeyCode::Escape, true) => {
                 event_loop.exit();
-            } 
-            _ => {},
+            }
+            _ => {}
         }
     }
 
@@ -194,7 +200,7 @@ impl State {
         // We don't have anything to update yet
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self) -> Option<()> {
         self.time = self.start.elapsed().unwrap().as_secs_f32();
         let param_data = vec![
             self.time,
@@ -209,7 +215,20 @@ impl State {
             .queue
             .write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&param_data));
 
-        let output = self.init.surface.get_current_texture()?;
+        let output = match self.init.surface.get_current_texture() {
+            wgpu::CurrentSurfaceTexture::Success(texture)
+            | wgpu::CurrentSurfaceTexture::Suboptimal(texture) => texture,
+            wgpu::CurrentSurfaceTexture::Occluded | wgpu::CurrentSurfaceTexture::Timeout => {
+                return None;
+            }
+            wgpu::CurrentSurfaceTexture::Lost | wgpu::CurrentSurfaceTexture::Outdated => {
+                return None;
+            }
+            other => {
+                eprintln!("Failed to get surface texture: {other:?}");
+                return None;
+            }
+        };
 
         let view = output
             .texture
@@ -256,6 +275,6 @@ impl State {
         self.init.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 
-        Ok(())
+        Some(())
     }
 }

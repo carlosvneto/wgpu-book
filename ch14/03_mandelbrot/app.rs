@@ -35,8 +35,16 @@ impl ApplicationHandler for App {
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
-        self.state =
-            Some(pollster::block_on(async { State::new(window, self.color_id, self.cx, self.cy).await }));
+        self.state = Some(pollster::block_on(async {
+            State::new(
+                event_loop.owned_display_handle(),
+                window.into(),
+                self.color_id,
+                self.cx,
+                self.cy,
+            )
+            .await
+        }));
     }
 
     fn window_event(
@@ -58,27 +66,8 @@ impl ApplicationHandler for App {
                 state.resize(size.width, size.height);
             }
             WindowEvent::RedrawRequested => {
+                let _ = state.render();
                 state.update();
-                match state.render() {
-                    Ok(_) => {}
-                    // Rebuild your Surface if it's lost or outdated
-                    Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        let size = state.window().inner_size();
-                        state.resize(size.width, size.height);
-                    }
-                    // Terminate application if memory is low
-                    Err(wgpu::SurfaceError::OutOfMemory) => {
-                        println!("Out of memory");
-                        event_loop.exit();
-                    }
-                    // If a frame takes too long to display, warn and move on to the next frame
-                    Err(wgpu::SurfaceError::Timeout) => {
-                        println!("Surface timeout");
-                    }
-                    Err(wgpu::SurfaceError::Other) => {
-                        println!("Surface error");
-                    }
-                }
             }
             WindowEvent::KeyboardInput {
                 event:

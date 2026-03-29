@@ -12,7 +12,7 @@ mod state;
 mod vertex;
 
 use crate::app::App;
-use crate::vertex::{vertex, Vertex};
+use crate::vertex::{Vertex, vertex};
 
 fn create_vertices(r: f32, u: usize, v: usize) -> Vec<Vertex> {
     let mut pts: Vec<Vertex> = Vec::with_capacity((4 * (u - 1) * (v - 1)) as usize);
@@ -45,9 +45,9 @@ fn main() {
         env_logger::init();
 
         let event_loop = EventLoop::builder().build()?;
-    
+
         let mut app = App::new(&mesh_data, title, None);
-        
+
         event_loop.run_app(&mut app)?;
 
         Ok(())

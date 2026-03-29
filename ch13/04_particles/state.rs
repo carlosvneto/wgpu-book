@@ -1,9 +1,9 @@
-use std::sync::Arc;
 use rand::distr::{Distribution, Uniform};
+use std::sync::Arc;
 use std::time::SystemTime;
 use wgpu::util::DeviceExt;
 use winit::{
-    event_loop::ActiveEventLoop,
+    event_loop::{ActiveEventLoop, OwnedDisplayHandle},
     keyboard::KeyCode,
     window::Window,
 };
@@ -40,9 +40,14 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(window: Arc<Window>, num_particles: u32, particle_size: f32) -> Self {
+    pub async fn new(
+        display: OwnedDisplayHandle,
+        window: Arc<Window>,
+        num_particles: u32,
+        particle_size: f32,
+    ) -> Self {
         let start = SystemTime::now();
-        let init = ws::InitWgpu::init_wgpu(window, 1).await;
+        let init = ws::InitWgpu::init_wgpu(display, window, 1).await;
 
         // Loading Shader
         let shader = init
@@ -154,7 +159,7 @@ impl State {
             init.device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("compute"),
-                    bind_group_layouts: &[&compute_bind_group_layout],
+                    bind_group_layouts: &[Some(&compute_bind_group_layout)],
                     immediate_size: 0,
                 });
 
@@ -247,7 +252,7 @@ impl State {
             init.device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("render"),
-                    bind_group_layouts: &[&render_bind_group_layout],
+                    bind_group_layouts: &[Some(&render_bind_group_layout)],
                     immediate_size: 0,
                 });
 
@@ -321,7 +326,6 @@ impl State {
         &self.init.window
     }
 
-
     pub fn resize(&mut self, width: u32, height: u32) {
         if width > 0 && height > 0 {
             // The surface needs to be reconfigured every time the window is resized.
@@ -332,13 +336,13 @@ impl State {
                 .configure(&self.init.device, &self.init.config);
         }
     }
-       
+
     pub fn handle_key_input(&mut self, event_loop: &ActiveEventLoop, key: KeyCode, pressed: bool) {
         match (key, pressed) {
             (KeyCode::Escape, true) => {
                 event_loop.exit();
-            } 
-           _ => {},
+            }
+            _ => {}
         }
     }
 
@@ -346,7 +350,7 @@ impl State {
         // empty
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self) -> Option<()> {
         let t = self.start.elapsed().unwrap().as_millis() as f32 / 1000.0;
         let dt0 = t - self.t0;
         if dt0 >= 2.0 {
@@ -360,7 +364,21 @@ impl State {
         self.t1 = t;
         self.particle_uniform_data[2] = dt1;
 
-        let output = self.init.surface.get_current_texture()?;
+        let output = match self.init.surface.get_current_texture() {
+            wgpu::CurrentSurfaceTexture::Success(texture)
+            | wgpu::CurrentSurfaceTexture::Suboptimal(texture) => texture,
+            wgpu::CurrentSurfaceTexture::Occluded | wgpu::CurrentSurfaceTexture::Timeout => {
+                return None;
+            }
+            wgpu::CurrentSurfaceTexture::Lost | wgpu::CurrentSurfaceTexture::Outdated => {
+                return None;
+            }
+            other => {
+                eprintln!("Failed to get surface texture: {other:?}");
+                return None;
+            }
+        };
+
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
@@ -424,6 +442,6 @@ impl State {
         self.init.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 
-        Ok(())
+        Some(())
     }
 }

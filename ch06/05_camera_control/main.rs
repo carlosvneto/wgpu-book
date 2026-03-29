@@ -8,7 +8,7 @@ mod vertex;
 
 fn main() {
     let title = "ch06 camera control - press right mouse button";
-    
+
     let _ = run(title);
 
     pub fn run(title: &'static str) -> anyhow::Result<()> {

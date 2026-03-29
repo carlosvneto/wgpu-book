@@ -2,8 +2,8 @@ use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
     event::{KeyEvent, WindowEvent},
-    event_loop::ActiveEventLoop,
-    keyboard::{PhysicalKey, KeyCode},
+    event_loop::{ActiveEventLoop, OwnedDisplayHandle},
+    keyboard::{KeyCode, PhysicalKey},
     window::{Window, WindowId},
 };
 
@@ -12,8 +12,7 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(window: Arc<Window>) -> Self {
-
+    pub async fn new(_display: OwnedDisplayHandle, window: Arc<Window>) -> Self {
         Self { window }
     }
 
@@ -25,8 +24,8 @@ impl State {
         match (key, pressed) {
             (KeyCode::Escape, true) => {
                 event_loop.exit();
-            } 
-           _ => {},
+            }
+            _ => {}
         }
     }
 }
@@ -42,7 +41,9 @@ impl ApplicationHandler for App {
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
-        self.state = Some(pollster::block_on(async { State::new(window).await }));
+        self.state = Some(pollster::block_on(async {
+            State::new(event_loop.owned_display_handle(), window.into()).await
+        }));
     }
 
     fn window_event(

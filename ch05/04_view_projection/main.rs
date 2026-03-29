@@ -1,4 +1,4 @@
-use glam::{Mat4 , Vec3};
+use glam::{Mat4, Vec3};
 use std::f32::consts::FRAC_PI_6;
 mod colormap;
 

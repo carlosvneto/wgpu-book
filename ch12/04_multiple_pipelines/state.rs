@@ -1,15 +1,15 @@
-use std::sync::Arc;
 use bytemuck::cast_slice;
 use glam::Mat4;
+use std::sync::Arc;
 use wgpu::util::DeviceExt;
 use winit::{
-    event_loop::ActiveEventLoop,
+    event_loop::{ActiveEventLoop, OwnedDisplayHandle},
     keyboard::KeyCode,
     window::Window,
 };
 
-use crate::vertex_cube::{create_vertices2, Vertex2};
-use crate::vertex_sphere::{create_vertices, Vertex};
+use crate::vertex_cube::{Vertex2, create_vertices2};
+use crate::vertex_sphere::{Vertex, create_vertices};
 use wgpu_book::texture_data;
 use wgpu_book::transforms;
 use wgpu_book::wgpu_simplified as ws;
@@ -41,8 +41,8 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(window: Arc<Window>) -> Self {
-        let init = ws::InitWgpu::init_wgpu(window, 1).await;
+    pub async fn new(display: OwnedDisplayHandle, window: Arc<Window>) -> Self {
+        let init = ws::InitWgpu::init_wgpu(display, window, 1).await;
 
         let light_data = light([1.0, 1.0, 0.0], 0.1, 0.8, 0.4, 30.0, 1);
         let data = create_vertices();
@@ -223,7 +223,10 @@ impl State {
             .device
             .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[&uniform_bind_group_layout, &texture_bind_group_layout],
+                bind_group_layouts: &[
+                    Some(&uniform_bind_group_layout),
+                    Some(&texture_bind_group_layout),
+                ],
                 immediate_size: 0,
             });
 
@@ -257,8 +260,8 @@ impl State {
                 },
                 depth_stencil: Some(wgpu::DepthStencilState {
                     format: wgpu::TextureFormat::Depth24Plus,
-                    depth_write_enabled: true,
-                    depth_compare: wgpu::CompareFunction::LessEqual,
+                    depth_write_enabled: Some(true),
+                    depth_compare: Some(wgpu::CompareFunction::LessEqual),
                     stencil: wgpu::StencilState::default(),
                     bias: wgpu::DepthBiasState::default(),
                 }),
@@ -326,7 +329,7 @@ impl State {
             init.device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("Render Pipeline Layout 2"),
-                    bind_group_layouts: &[&uniform_bind_group_layout2],
+                    bind_group_layouts: &[Some(&uniform_bind_group_layout2)],
                     immediate_size: 0,
                 });
 
@@ -361,8 +364,8 @@ impl State {
                 },
                 depth_stencil: Some(wgpu::DepthStencilState {
                     format: wgpu::TextureFormat::Depth24Plus,
-                    depth_write_enabled: true,
-                    depth_compare: wgpu::CompareFunction::LessEqual,
+                    depth_write_enabled: Some(true),
+                    depth_compare: Some(wgpu::CompareFunction::LessEqual),
                     stencil: wgpu::StencilState::default(),
                     bias: wgpu::DepthBiasState::default(),
                 }),
@@ -416,10 +419,8 @@ impl State {
                 .surface
                 .configure(&self.init.device, &self.init.config);
 
-            self.project_mat = transforms::create_projection(
-                width as f32 / height as f32,
-                IS_PERSPECTIVE,
-            );
+            self.project_mat =
+                transforms::create_projection(width as f32 / height as f32, IS_PERSPECTIVE);
         }
     }
 
@@ -427,8 +428,8 @@ impl State {
         match (key, pressed) {
             (KeyCode::Escape, true) => {
                 event_loop.exit();
-            } 
-            _ => {},
+            }
+            _ => {}
         }
     }
 
@@ -478,8 +479,21 @@ impl State {
             .write_buffer(&self.uniform_buffer2, 0, bytemuck::cast_slice(mvp_ref2));
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let output = self.init.surface.get_current_texture()?;
+    pub fn render(&mut self) -> Option<()> {
+        let output = match self.init.surface.get_current_texture() {
+            wgpu::CurrentSurfaceTexture::Success(texture)
+            | wgpu::CurrentSurfaceTexture::Suboptimal(texture) => texture,
+            wgpu::CurrentSurfaceTexture::Occluded | wgpu::CurrentSurfaceTexture::Timeout => {
+                return None;
+            }
+            wgpu::CurrentSurfaceTexture::Lost | wgpu::CurrentSurfaceTexture::Outdated => {
+                return None;
+            }
+            other => {
+                eprintln!("Failed to get surface texture: {other:?}");
+                return None;
+            }
+        };
 
         let view = output
             .texture
@@ -559,6 +573,6 @@ impl State {
         self.init.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 
-        Ok(())
+        Some(())
     }
 }

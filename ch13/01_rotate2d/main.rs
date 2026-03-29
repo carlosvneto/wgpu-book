@@ -1,34 +1,41 @@
 use wgpu::util::DeviceExt;
 
 async fn run(point: Vec<f32>, angle: f32) -> Option<Vec<f32>> {
-    let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-        backends: wgpu::Backends::PRIMARY,
-        ..Default::default()
-    });
+    // This is what loads the vulkan/dx12/metal/opengl libraries.
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
 
-    // Adapter:
+    // Adapter
     let adapter = instance
-        .request_adapter(&wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::default(),
-            //compatible_surface: Some(&surface),
-            force_fallback_adapter: false,
-            ..Default::default()
-        })
+        .request_adapter(&wgpu::RequestAdapterOptions::default())
         .await
         .unwrap();
 
-    // Logical Device and Queue
-    let (device, queue) = adapter
-        .request_device(
-            &wgpu::DeviceDescriptor {
-                label: None,
-                required_features: wgpu::Features::empty(),
-                required_limits: wgpu::Limits::default(),
-                ..Default::default()
-            },
-        )
-        .await
-        .unwrap();
+    // Print out some basic information about the adapter.
+    println!("Running on Adapter: {:#?}", adapter.get_info());
+
+    // Check to see if the adapter supports compute shaders. While WebGPU guarantees support for
+    // compute shaders, wgpu supports a wider range of devices through the use of "downlevel" devices.
+    let downlevel_capabilities = adapter.get_downlevel_capabilities();
+    if !downlevel_capabilities
+        .flags
+        .contains(wgpu::DownlevelFlags::COMPUTE_SHADERS)
+    {
+        panic!("Adapter does not support compute shaders");
+    }
+
+    // We then create a `Device` and a `Queue` from the `Adapter`.
+    //
+    // The `Device` is used to create and manage GPU resources.
+    // The `Queue` is a queue used to submit work for the GPU to process.
+    let (device, queue) = pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor {
+        label: None,
+        required_features: wgpu::Features::empty(),
+        required_limits: wgpu::Limits::downlevel_defaults(),
+        experimental_features: wgpu::ExperimentalFeatures::disabled(),
+        memory_hints: wgpu::MemoryHints::MemoryUsage,
+        trace: wgpu::Trace::Off,
+    }))
+    .expect("Failed to create device");
 
     // Loading shader
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -120,7 +127,7 @@ async fn run(point: Vec<f32>, angle: f32) -> Option<Vec<f32>> {
 
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("Pipeline Layout"),
-        bind_group_layouts: &[&bind_group_layout],
+        bind_group_layouts: &[Some(&bind_group_layout)],
         immediate_size: 0,
     });
 
@@ -158,7 +165,6 @@ async fn run(point: Vec<f32>, angle: f32) -> Option<Vec<f32>> {
     //device.poll(wgpu::Maintain::wait()).panic_on_timeout();
     // Wait for the GPU to finish working on the submitted work
     device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
-
 
     if let Ok(Ok(())) = receiver.recv_async().await {
         // get buffer content

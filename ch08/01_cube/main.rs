@@ -41,11 +41,7 @@ fn main() {
 
     let _ = run(&vertex_data, light_data, title);
 
-    pub fn run(
-        vertex_data: &Vec<Vertex>,
-        light_data: Light,
-        title: &str,
-    ) -> anyhow::Result<()> {
+    pub fn run(vertex_data: &Vec<Vertex>, light_data: Light, title: &str) -> anyhow::Result<()> {
         env_logger::init();
 
         let event_loop = EventLoop::builder().build()?;

@@ -6,7 +6,7 @@
 * the Next-Generation Graphics API
 
 * Tested programs under macOS Tahoe 26.3.1 and Windows 11 
-* wgpu version 28.0.0 and winit version 0.30.13
+* wgpu version 29.0.0 and winit version 0.30.13
 
 * Compile and run programs:
 * cargo run --example ch01_window

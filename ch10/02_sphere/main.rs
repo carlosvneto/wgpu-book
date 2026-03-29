@@ -15,8 +15,8 @@ use wgpu_book::vertex_data;
 use winit::event_loop::EventLoop;
 
 use crate::app::App;
-use crate::light::{light, Light};
-use crate::vertex::{vertex, Vertex};
+use crate::light::{Light, light};
+use crate::vertex::{Vertex, vertex};
 
 fn create_vertices() -> Vec<Vertex> {
     let (pos, normal, uv) = vertex_data::sphere_data(1.7, 30, 50);

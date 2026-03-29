@@ -1,9 +1,9 @@
-use std::sync::Arc;
 use bytemuck::cast_slice;
 use glam::Mat4;
+use std::sync::Arc;
 use wgpu::util::DeviceExt;
 use winit::{
-    event_loop::ActiveEventLoop,
+    event_loop::{ActiveEventLoop, OwnedDisplayHandle},
     keyboard::KeyCode,
     window::Window,
 };
@@ -29,8 +29,13 @@ pub struct State {
 }
 
 impl<'a> State {
-    pub async fn new(window: Arc<Window>, vertex_data: &'a Vec<Vertex>, light_data: Light) -> Self {
-        let init = ws::InitWgpu::init_wgpu(window, 1).await;
+    pub async fn new(
+        display: OwnedDisplayHandle,
+        window: Arc<Window>,
+        vertex_data: &'a Vec<Vertex>,
+        light_data: Light,
+    ) -> Self {
+        let init = ws::InitWgpu::init_wgpu(display, window, 1).await;
 
         // Loading Shaders
         let shader = init
@@ -40,7 +45,7 @@ impl<'a> State {
         // uniform data
         let camera_position = (3.0, 1.5, 3.0).into();
         let look_direction = (0.0, 0.0, 0.0).into();
-        let up_direction = (0.0, 1.0, 0.0).into(); 
+        let up_direction = (0.0, 1.0, 0.0).into();
 
         let (view_mat, project_mat, _) = transforms::create_view_projection(
             camera_position,
@@ -157,7 +162,7 @@ impl<'a> State {
             .device
             .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[&uniform_bind_group_layout],
+                bind_group_layouts: &[Some(&uniform_bind_group_layout)],
                 immediate_size: 0,
             });
 
@@ -192,8 +197,8 @@ impl<'a> State {
                 },
                 depth_stencil: Some(wgpu::DepthStencilState {
                     format: wgpu::TextureFormat::Depth24Plus,
-                    depth_write_enabled: true,
-                    depth_compare: wgpu::CompareFunction::LessEqual,
+                    depth_write_enabled: Some(true),
+                    depth_compare: Some(wgpu::CompareFunction::LessEqual),
                     stencil: wgpu::StencilState::default(),
                     bias: wgpu::DepthBiasState::default(),
                 }),
@@ -238,10 +243,8 @@ impl<'a> State {
                 .surface
                 .configure(&self.init.device, &self.init.config);
 
-            self.project_mat = transforms::create_projection(
-                width as f32 / height as f32,
-                IS_PERSPECTIVE,
-            );
+            self.project_mat =
+                transforms::create_projection(width as f32 / height as f32, IS_PERSPECTIVE);
         }
     }
 
@@ -249,8 +252,8 @@ impl<'a> State {
         match (key, pressed) {
             (KeyCode::Escape, true) => {
                 event_loop.exit();
-            } 
-            _ => {},
+            }
+            _ => {}
         }
     }
 
@@ -287,8 +290,22 @@ impl<'a> State {
         );
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let output = self.init.surface.get_current_texture()?;
+    pub fn render(&mut self) -> Option<()> {
+        let output = match self.init.surface.get_current_texture() {
+            wgpu::CurrentSurfaceTexture::Success(texture)
+            | wgpu::CurrentSurfaceTexture::Suboptimal(texture) => texture,
+            wgpu::CurrentSurfaceTexture::Occluded | wgpu::CurrentSurfaceTexture::Timeout => {
+                return None;
+            }
+            wgpu::CurrentSurfaceTexture::Lost | wgpu::CurrentSurfaceTexture::Outdated => {
+                return None;
+            }
+            other => {
+                eprintln!("Failed to get surface texture: {other:?}");
+                return None;
+            }
+        };
+
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
@@ -357,6 +374,6 @@ impl<'a> State {
         self.init.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 
-        Ok(())
+        Some(())
     }
 }

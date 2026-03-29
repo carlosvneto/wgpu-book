@@ -13,8 +13,8 @@ use std::f32::consts::PI;
 use winit::event_loop::EventLoop;
 
 use crate::app::App;
-use crate::light::{light, Light};
-use crate::vertex::{create_vertices, create_vertices_param, Vertex};
+use crate::light::{Light, light};
+use crate::vertex::{Vertex, create_vertices, create_vertices_param};
 
 fn add_center(mut data: Vec<Vertex>, center: [f32; 3]) -> Vec<Vertex> {
     for i in 0..data.len() {

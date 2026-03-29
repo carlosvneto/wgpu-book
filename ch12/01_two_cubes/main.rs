@@ -7,7 +7,7 @@ mod vertex;
 
 fn main() {
     let title = "ch12 two cubes";
-    
+
     let _ = run(title);
 
     pub fn run(title: &'static str) -> anyhow::Result<()> {

@@ -1,8 +1,8 @@
-use std::sync::Arc;
 use rand::distr::{Distribution, Uniform};
+use std::sync::Arc;
 use wgpu::util::DeviceExt;
 use winit::{
-    event_loop::ActiveEventLoop,
+    event_loop::{ActiveEventLoop, OwnedDisplayHandle},
     keyboard::KeyCode,
     window::Window,
 };
@@ -25,8 +25,8 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(window: Arc<Window>, color_scale: f32) -> Self {
-        let init = ws::InitWgpu::init_wgpu(window, 1).await;
+    pub async fn new(display: OwnedDisplayHandle, window: Arc<Window>, color_scale: f32) -> Self {
+        let init = ws::InitWgpu::init_wgpu(display, window, 1).await;
 
         // Loading Shader
         let shader = init
@@ -105,7 +105,7 @@ impl State {
             init.device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("compute"),
-                    bind_group_layouts: &[&compute_bind_group_layout],
+                    bind_group_layouts: &[Some(&compute_bind_group_layout)],
                     immediate_size: 0,
                 });
 
@@ -138,7 +138,7 @@ impl State {
             init.device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("render"),
-                    bind_group_layouts: &[&render_bind_group_layout],
+                    bind_group_layouts: &[Some(&render_bind_group_layout)],
                     immediate_size: 0,
                 });
 
@@ -155,13 +155,13 @@ impl State {
                             array_stride: 4 * 4,
                             step_mode: wgpu::VertexStepMode::Instance,
                             attributes: &wgpu::vertex_attr_array![0 => Float32x2, 1 => Float32x2],
-                                                   // particle -> 0 = position  , 1 = velocity
+                            // particle -> 0 = position  , 1 = velocity
                         },
                         wgpu::VertexBufferLayout {
                             array_stride: 2 * 4,
                             step_mode: wgpu::VertexStepMode::Vertex,
                             attributes: &wgpu::vertex_attr_array![2 => Float32x2],
-                                                     // vertex -> 2 = position
+                            // vertex -> 2 = position
                         },
                     ],
                     compilation_options: Default::default(),
@@ -281,8 +281,8 @@ impl State {
         match (key, pressed) {
             (KeyCode::Escape, true) => {
                 event_loop.exit();
-            } 
-           _ => {},
+            }
+            _ => {}
         }
     }
 
@@ -290,8 +290,22 @@ impl State {
         // empty
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let output = self.init.surface.get_current_texture()?;
+    pub fn render(&mut self) -> Option<()> {
+        let output = match self.init.surface.get_current_texture() {
+            wgpu::CurrentSurfaceTexture::Success(texture)
+            | wgpu::CurrentSurfaceTexture::Suboptimal(texture) => texture,
+            wgpu::CurrentSurfaceTexture::Occluded | wgpu::CurrentSurfaceTexture::Timeout => {
+                return None;
+            }
+            wgpu::CurrentSurfaceTexture::Lost | wgpu::CurrentSurfaceTexture::Outdated => {
+                return None;
+            }
+            other => {
+                eprintln!("Failed to get surface texture: {other:?}");
+                return None;
+            }
+        };
+
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
@@ -352,6 +366,6 @@ impl State {
         self.init.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 
-        Ok(())
+        Some(())
     }
 }
