@@ -12,8 +12,8 @@ glam = "0.32.1"
 image = "0.25.10"        # ch10
 log = "0.4.29"
 pollster = "0.4.0"
-rand = "0.10.0"          # ch13
-wgpu = "29.0.0"
+rand = "0.10.1"          # ch13
+wgpu = "29.0.3"
 winit = "0.30.13"
 
 [[example]]
