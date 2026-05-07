@@ -5,7 +5,7 @@
 * Devices and the Web in Rust using wgpu -
 * the Next-Generation Graphics API
 
-* Tested programs under macOS Tahoe 26.3.1 and Windows 11 
+* Tested programs under macOS Tahoe 26.4.1 and Windows 11 
 * wgpu version 29.0.3 and winit version 0.30.13
 
 * Compile and run programs:
