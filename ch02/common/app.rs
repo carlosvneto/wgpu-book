@@ -36,7 +36,6 @@ impl<'a> ApplicationHandler for App<'a> {
 
         self.state = Some(pollster::block_on(async {
             State::new(
-                event_loop.owned_display_handle(),
                 window.into(),
                 &self.inputs,
                 self.num_vertices,

@@ -37,7 +37,6 @@ impl ApplicationHandler for App {
 
         self.state = Some(pollster::block_on(async {
             State::new(
-                event_loop.owned_display_handle(),
                 window.into(),
                 self.color_id,
                 self.cx,

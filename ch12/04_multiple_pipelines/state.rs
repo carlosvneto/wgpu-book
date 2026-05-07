@@ -3,7 +3,7 @@ use glam::Mat4;
 use std::sync::Arc;
 use wgpu::util::DeviceExt;
 use winit::{
-    event_loop::{ActiveEventLoop, OwnedDisplayHandle},
+    event_loop::ActiveEventLoop,
     keyboard::KeyCode,
     window::Window,
 };
@@ -41,8 +41,8 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(display: OwnedDisplayHandle, window: Arc<Window>) -> Self {
-        let init = ws::InitWgpu::init_wgpu(display, window, 1).await;
+    pub async fn new(window: Arc<Window>) -> Self {
+        let init = ws::InitWgpu::init_wgpu(window, 1).await;
 
         let light_data = light([1.0, 1.0, 0.0], 0.1, 0.8, 0.4, 30.0, 1);
         let data = create_vertices();
@@ -479,19 +479,25 @@ impl State {
             .write_buffer(&self.uniform_buffer2, 0, bytemuck::cast_slice(mvp_ref2));
     }
 
-    pub fn render(&mut self) -> Option<()> {
+    pub fn render(&mut self) -> anyhow::Result<()> {
         let output = match self.init.surface.get_current_texture() {
-            wgpu::CurrentSurfaceTexture::Success(texture)
-            | wgpu::CurrentSurfaceTexture::Suboptimal(texture) => texture,
-            wgpu::CurrentSurfaceTexture::Occluded | wgpu::CurrentSurfaceTexture::Timeout => {
-                return None;
+            wgpu::CurrentSurfaceTexture::Success(surface_texture) => surface_texture,
+            wgpu::CurrentSurfaceTexture::Suboptimal(surface_texture) => {
+                self.init.surface.configure(&self.init.device, &self.init.config);
+                surface_texture
             }
-            wgpu::CurrentSurfaceTexture::Lost | wgpu::CurrentSurfaceTexture::Outdated => {
-                return None;
+            wgpu::CurrentSurfaceTexture::Timeout
+            | wgpu::CurrentSurfaceTexture::Occluded
+            | wgpu::CurrentSurfaceTexture::Validation => {
+                // Skip this frame
+                return Ok(());
             }
-            other => {
-                eprintln!("Failed to get surface texture: {other:?}");
-                return None;
+            wgpu::CurrentSurfaceTexture::Outdated => {
+                self.init.surface.configure(&self.init.device, &self.init.config);
+                return Ok(());
+            }
+            wgpu::CurrentSurfaceTexture::Lost => {
+                anyhow::bail!("Lost device");
             }
         };
 
@@ -573,6 +579,6 @@ impl State {
         self.init.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 
-        Some(())
+        Ok(())
     }
 }

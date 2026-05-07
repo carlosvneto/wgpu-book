@@ -33,7 +33,7 @@ impl ApplicationHandler for App {
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
         self.state = Some(pollster::block_on(async {
-            State::new(event_loop.owned_display_handle(), window.into()).await
+            State::new(window.into()).await
         }));
 
         self.render_start_time = Some(time::Instant::now());

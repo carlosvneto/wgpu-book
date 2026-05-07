@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use winit::{event_loop::OwnedDisplayHandle, window::Window};
+use winit::window::Window;
 
 // region: wgpu initialization
 pub struct InitWgpu {
@@ -15,13 +15,16 @@ pub struct InitWgpu {
 
 impl InitWgpu {
     pub async fn init_wgpu(
-        display: OwnedDisplayHandle,
         window: Arc<Window>,
         sample_count: u32,
     ) -> Self {
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_with_display_handle(
-            Box::new(display),
-        ));
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+            backends: wgpu::Backends::PRIMARY,
+            flags: Default::default(),
+            memory_budget_thresholds: Default::default(),
+            backend_options: Default::default(),
+            display: None,
+        });
 
         // Surface
         let surface = instance.create_surface(window.clone()).unwrap();
